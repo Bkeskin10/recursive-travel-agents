@@ -59,9 +59,16 @@ if result:
     elif status == "FAIL":
         st.warning("Final verification: FAIL — the itinerary may contain unresolved issues. Review before using it.")
     elif status == "NOT_FULLY_VERIFIED":
-        st.warning("Final verification: NOT FULLY VERIFIED — some checks could not be completed.")
+        st.warning("Final verification: NOT FULLY VERIFIED — some checks could not be completed.")   
     else:
-        st.info(f"Final verification status: {status}")
+        st.info(
+            "🔄 Recursive AI review completed. "
+            "The system generated, evaluated, and revised "
+            "the itinerary through multiple agent cycles. "
+            "Remaining issues are shown transparently. "
+            f"Final verification status: {status}"
+        )
+
 
     if itinerary:
         st.markdown(itinerary)
