@@ -21,7 +21,10 @@ def ask_llm(system_prompt, user_prompt, max_tokens=1200):
             {"role": "user", "content": user_prompt}
         ],
         "max_tokens": max_tokens,
-        "temperature": 0.2
+        "temperature": 0.2,
+        "chat_template_kwargs": {
+            "enable_thinking": False
+        }
     }
 
     with httpx.Client(timeout=90) as client:
@@ -34,4 +37,18 @@ def ask_llm(system_prompt, user_prompt, max_tokens=1200):
         )
 
         response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
+
+        data = response.json()
+        message = data["choices"][0]["message"]
+
+        content = message.get("content") or ""
+        reasoning = message.get("reasoning_content") or ""
+
+        print("\n=== LLM DEBUG ===")
+        print("Finish reason:", data["choices"][0].get("finish_reason"))
+        print("Content length:", len(content))
+        print("Reasoning length:", len(reasoning))
+        print("Usage:", data.get("usage"))
+        print("=================\n")
+
+        return content
