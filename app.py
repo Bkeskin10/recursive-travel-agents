@@ -1,6 +1,18 @@
 import streamlit as st
 from orchestrator import run_agents
 
+import os
+
+try:
+    secret_found = bool(st.secrets.get("CRUSOE_API_KEY"))
+except Exception:
+    secret_found = False
+
+env_found = bool(os.getenv("CRUSOE_API_KEY"))
+
+st.write("Streamlit secret detected:", secret_found)
+st.write("Environment variable detected:", env_found)
+
 st.set_page_config(page_title="Recursive Travel AI", page_icon="✈️", layout="wide")
 
 st.title("✈️ Recursive Travel AI")
