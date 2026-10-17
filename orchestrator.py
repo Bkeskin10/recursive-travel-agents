@@ -4,24 +4,58 @@ from agents.researcher import research_itinerary
 from agents.verifier import verify_itinerary
 from agents.improver import improve_itinerary
 from agents.budget_validator import validate_budget
+import re
 
 
 MAX_IMPROVEMENT_CYCLES = 3
 
 
 def get_verification_status(verification):
-    """Extract PASS or FAIL from the verifier response."""
-    if not isinstance(verification, str):
+    """
+    Return PASS only when the verifier explicitly passes
+    and does not report unresolved issues.
+    """
+    if not isinstance(verification, str) or not verification.strip():
         return "FAIL"
 
-    for line in verification.splitlines():
-        line = line.strip().replace("**", "").upper()
+    status_match = re.search(
+        r"^\s*STATUS:\s*(PASS|FAIL)\s*$",
+        verification,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
 
-        if line.startswith("STATUS:"):
-            value = line.split(":", 1)[1].strip()
-            return "PASS" if value == "PASS" else "FAIL"
+    if not status_match:
+        return "FAIL"
 
+    if status_match.group(1).upper() != "PASS":
+        return "FAIL"
+
+    issues_match = re.search(
+        r"^\s*ISSUES:\s*(.*?)(?=^\s*(?:RECOMMENDATIONS|STATUS):|\Z)",
+        verification,
+        flags=re.IGNORECASE | re.MULTILINE | re.DOTALL,
+    )
+
+    if not issues_match:
+        # Require an explicit issues section.
+        return "FAIL"
+
+    issues = issues_match.group(1).strip()
+
+    if not issues:
+        return "PASS"
+
+    if re.fullmatch(
+        r"(?:none|no issues|no issues found|n/a|not applicable|0|"
+        r"no critical issues|no unresolved issues)[.!]?",
+        issues,
+        flags=re.IGNORECASE,
+    ):
+        return "PASS"
+
+    # Nonempty unresolved issue descriptions override PASS.
     return "FAIL"
+
 
 
 def run_agents(
